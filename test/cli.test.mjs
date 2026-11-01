@@ -81,7 +81,7 @@ test('inject puts the live CodeAPI routing ahead of the hand-off: the window mov
   const windowId = '8030da57-24fc-4d7c-88a1-6e0b9a3427a8';
   const server = createServer((req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    if (req.url === '/session') res.end(JSON.stringify({ workspaceUri: 'file:///c%3A/Users/me/Desktop/Powershell%20ToolKit', serverPort: server.address().port, codeapiWindowId: windowId }));
+    if (req.url === '/session') res.end(JSON.stringify({ workspaceUri: 'file:///c%3A/Users/accountName/Desktop/Powershell%20ToolKit', serverPort: server.address().port, codeapiWindowId: windowId }));
     else if (req.url === '/term/list') res.end(JSON.stringify([{ id: 'codeapi:NewSession', alive: true, pid: 96056 }]));
     else res.end('{}');
   });

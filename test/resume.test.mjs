@@ -39,7 +39,7 @@ const DOC_A = {
   untilLine: null,
   records: 14,
   session: {
-    metadata: { threadId: T, cwd: 'C:\\Users\\me\\Desktop\\Powershell ToolKit' },
+    metadata: { threadId: T, cwd: 'C:\\Users\\accountName\\Desktop\\Powershell ToolKit' },
     timeline: [
       { kind: 'user_message', lineNumber: 2, timestamp: ts('02', 2), text: 'Explore the catalog through the existing PTY.' },
       { kind: 'compaction', lineNumber: 5, timestamp: ts('02', 5) },
@@ -53,7 +53,7 @@ const DOC_B = {
   untilLine: null,
   records: 8,
   session: {
-    metadata: { threadId: T, cwd: 'C:\\Users\\me\\Desktop\\Powershell ToolKit' },
+    metadata: { threadId: T, cwd: 'C:\\Users\\accountName\\Desktop\\Powershell ToolKit' },
     timeline: [
       { kind: 'user_message', lineNumber: 2, timestamp: ts('03', 2), text: 'Continue the codex-handoff work.' },
       { kind: 'agent_message', lineNumber: 4, timestamp: ts('03', 4), text: 'Re-establishing the baseline.' },

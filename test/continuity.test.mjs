@@ -12,10 +12,10 @@ import { pathIdentity } from '../lib/paths.mjs';
 import { appendRecord, correctAcceptances, effectiveAccepted, readLatest, readLifecycle, readRecord, verifyRecords } from '../lib/records.mjs';
 
 const SESSION = '01a0fcec-f1d6-7d43-99e1-54ce88dbb954';
-const A = 'C:\\Users\\me\\.codex\\sessions\\2026\\10\\02\\rollout-2026-10-02T10-03-01-01a0fcec-f1d6-7d43-99e1-54ce88dbb954.jsonl';
-const B = 'C:\\Users\\me\\.codex\\sessions\\2026\\10\\03\\rollout-2026-10-03T12-00-29-01a0fcec-f1d6-7d43-99e1-54ce88dbb954_01a1027e-d557-7bc2-b2f0-8479df4871d6.jsonl';
+const A = 'C:\\Users\\accountName\\.codex\\sessions\\2026\\10\\02\\rollout-2026-10-02T10-03-01-01a0fcec-f1d6-7d43-99e1-54ce88dbb954.jsonl';
+const B = 'C:\\Users\\accountName\\.codex\\sessions\\2026\\10\\03\\rollout-2026-10-03T12-00-29-01a0fcec-f1d6-7d43-99e1-54ce88dbb954_01a1027e-d557-7bc2-b2f0-8479df4871d6.jsonl';
 const W = '8030da57-24fc-4d7c-88a1-6e0b9a3427a8';
-const ALIGNED = { class: 'TASK_NAME', scopes: ['C:\\Users\\me\\Desktop\\HeliosEvidenceCatalog'], evidence: { rollout_line: 13 } };
+const ALIGNED = { class: 'TASK_NAME', scopes: ['C:\\Users\\accountName\\Desktop\\HeliosEvidenceCatalog'], evidence: { rollout_line: 13 } };
 const recipe = (kind, occurrence) => ({ recipe_id: `codeapi.terminal.${kind}`, derived_from: [occurrence], runtime: { terminal_id: 'codeapi:NewSession', codeapi_window_id: W } });
 
 // A record body as save() writes it; `segments` makes it a thread record (schema v3).
@@ -24,7 +24,7 @@ function body({ rollout = A, records, segments = null, recipes = [recipe('write'
     session_id: SESSION,
     recorded_at: recordedAt,
     event: 'PreCompact',
-    source: { rollout, rollout_identity: pathIdentity(rollout), records_read: records, cwd: 'c:\\Users\\me\\Desktop\\Powershell ToolKit', ...(segments ? { segments } : {}) },
+    source: { rollout, rollout_identity: pathIdentity(rollout), records_read: records, cwd: 'c:\\Users\\accountName\\Desktop\\Powershell ToolKit', ...(segments ? { segments } : {}) },
     alignment,
     recipes,
     codeapi_windows: windows.map((id) => ({ codeapi_window_id: id, port: 47338 })),

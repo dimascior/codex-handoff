@@ -154,20 +154,20 @@ test('the change log appends hash-linked entries and keeps rows verbatim', () =>
 });
 
 test('the index declares its task paths on its Scope checked line', () => {
-  const index = '**Scope checked:** `C:\\Users\\me\\Desktop\\CODEAPI`, `C:\\Users\\me\\Desktop\\HeliosEvidenceCatalog`, and `C:\\Users\\me\\Desktop\\MythosJustAFable`.  \n';
-  assert.deepEqual(parseScopePaths(index), ['C:\\Users\\me\\Desktop\\CODEAPI', 'C:\\Users\\me\\Desktop\\HeliosEvidenceCatalog', 'C:\\Users\\me\\Desktop\\MythosJustAFable']);
+  const index = '**Scope checked:** `C:\\Users\\accountName\\Desktop\\CODEAPI`, `C:\\Users\\accountName\\Desktop\\HeliosEvidenceCatalog`, and `C:\\Users\\accountName\\Desktop\\MythosJustAFable`.  \n';
+  assert.deepEqual(parseScopePaths(index), ['C:\\Users\\accountName\\Desktop\\CODEAPI', 'C:\\Users\\accountName\\Desktop\\HeliosEvidenceCatalog', 'C:\\Users\\accountName\\Desktop\\MythosJustAFable']);
   assert.deepEqual(parseScopePaths('# no scope here'), []);
 });
 
 test('alignment takes the strongest evidence: workspace, then a named path, then a named directory', () => {
-  const scope = ['C:\\Users\\me\\Desktop\\CODEAPI', 'C:\\Users\\me\\Desktop\\HeliosEvidenceCatalog'];
-  assert.equal(scopeAlignment({ cwd: 'c:\\users\\me\\desktop\\heliosevidencecatalog\\src', userMessages: [] }, scope).class, 'WORKSPACE');
-  const byPath = scopeAlignment({ cwd: 'C:\\Elsewhere', userMessages: [{ lineNumber: 7, text: 'read C:/Users/me/Desktop/CODEAPI/docs/API.md' }] }, scope);
-  assert.deepEqual(byPath, { class: 'TASK_PATH', scopes: ['C:\\Users\\me\\Desktop\\CODEAPI'], evidence: { rollout_line: 7 } });
+  const scope = ['C:\\Users\\accountName\\Desktop\\CODEAPI', 'C:\\Users\\accountName\\Desktop\\HeliosEvidenceCatalog'];
+  assert.equal(scopeAlignment({ cwd: 'c:\\users\\accountname\\desktop\\heliosevidencecatalog\\src', userMessages: [] }, scope).class, 'WORKSPACE');
+  const byPath = scopeAlignment({ cwd: 'C:\\Elsewhere', userMessages: [{ lineNumber: 7, text: 'read C:/Users/accountName/Desktop/CODEAPI/docs/API.md' }] }, scope);
+  assert.deepEqual(byPath, { class: 'TASK_PATH', scopes: ['C:\\Users\\accountName\\Desktop\\CODEAPI'], evidence: { rollout_line: 7 } });
   const byName = scopeAlignment({ cwd: 'C:\\Elsewhere', userMessages: [{ lineNumber: 13, text: 'Locate the local CodeAPI and the catalog' }] }, scope);
-  assert.deepEqual(byName, { class: 'TASK_NAME', scopes: ['C:\\Users\\me\\Desktop\\CODEAPI'], evidence: { rollout_line: 13 } });
+  assert.deepEqual(byName, { class: 'TASK_NAME', scopes: ['C:\\Users\\accountName\\Desktop\\CODEAPI'], evidence: { rollout_line: 13 } });
   // a sibling directory or a longer name is not the scope path
-  assert.equal(scopeAlignment({ cwd: 'C:\\Users\\me\\Desktop\\CODEAPI-clone', userMessages: [{ lineNumber: 2, text: 'work in CODEAPI-clone' }] }, scope).class, 'NOT_ALIGNED');
+  assert.equal(scopeAlignment({ cwd: 'C:\\Users\\accountName\\Desktop\\CODEAPI-clone', userMessages: [{ lineNumber: 2, text: 'work in CODEAPI-clone' }] }, scope).class, 'NOT_ALIGNED');
   assert.equal(scopeAlignment({ cwd: 'C:\\Work', userMessages: [] }, []).class, 'NOT_ALIGNED');
 });
 

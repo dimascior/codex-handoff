@@ -14,7 +14,7 @@ async function fakeCodeapi({ windowId, workspace, terminals = [], serverPort }) 
     const port = server.address().port;
     res.setHeader('Content-Type', 'application/json');
     if (req.url === '/session') {
-      res.end(JSON.stringify({ workspaceUri: `file:///c%3A/Users/me/Desktop/${encodeURIComponent(workspace)}`, windowId: 0, serverPort: serverPort ?? port, codeapiWindowId: windowId, extensionHostPid: 4242 }));
+      res.end(JSON.stringify({ workspaceUri: `file:///c%3A/Users/accountName/Desktop/${encodeURIComponent(workspace)}`, windowId: 0, serverPort: serverPort ?? port, codeapiWindowId: windowId, extensionHostPid: 4242 }));
     } else if (req.url === '/term/list') {
       res.end(JSON.stringify(terminals));
     } else {

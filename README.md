@@ -275,10 +275,51 @@ change it.
   tests track it.
 - Helios is optional. Without it the gate section is left out.
 
+## Setup
+
+Clone the repo and create `~/.codex-handoff/config.json`. Two paths have no defaults and must be
+set before the hooks can run:
+
+| Setting | Environment variable | What it points to |
+|---------|---------------------|-------------------|
+| `devtoolsDir` | `CODEX_HANDOFF_DEVTOOLS` | The root of your claude-devtools checkout (the directory that contains `scripts/codex-export.ts` and has `tsx` installed). Without it, exports fail and the hooks cannot read session records. |
+| `heliosRoot` | `CODEX_HANDOFF_HELIOS_ROOT` | The `.command-gate` directory of your Helios gate system, if you use one. Without it, the Helios gate contract section is left out of the hand-off (this is safe; set it only if you have a gate system). |
+
+The remaining settings have sensible defaults:
+
+| Setting | Default | What it does |
+|---------|---------|--------------|
+| `codexHome` / `CODEX_HOME` | `~/.codex` | The Codex data directory whose `sessions/` tree is searched for rollout files. |
+| `stateDir` / `CODEX_HANDOFF_STATE` | `~/.codex-handoff` | Where hand-off records, snapshots, and the config are stored. |
+| `codeapi.ports` / `CODEX_HANDOFF_CODEAPI_PORTS` | `47337-47400` | The port band scanned for live CODEAPI instances at injection time. Set to `off` if you do not use CODEAPI. |
+| `exportTimeoutMs` | `45000` | Timeout for the claude-devtools export of a rollout file. |
+| `maxInjectChars` | `7000` | Character limit for the injected text (keeps it under Codex's 2,500-token `additionalContextLimit`). |
+| `references` | `[]` | Documents the hand-off points to first (an operational index, for example). |
+| `index` | not set | An index document with generated rows; set `path` and optionally `maxSessions`, `changeLog`, `scopePaths`. |
+
+A minimal config that sets only the required paths:
+
+```json
+{
+  "devtoolsDir": "/home/accountName/claude-devtools",
+  "heliosRoot": null
+}
+```
+
+On Windows the paths are typically:
+
+```json
+{
+  "devtoolsDir": "C:\\Users\\accountName\\Desktop\\Codex_claude_devtools",
+  "heliosRoot": "C:\\Users\\accountName\\Desktop\\MythosJustAFable\\.command-gate"
+}
+```
+
 ## Install
 
-Add two events inside the `"hooks"` object of `~/.codex/hooks.json`, after the existing entries
-(leave those unchanged), then trust the two new hooks in Codex:
+Clone this repo, then add two events inside the `"hooks"` object of `~/.codex/hooks.json`, after
+the existing entries (leave those unchanged), and trust the two new hooks in Codex. Replace
+`<path-to-codex-handoff>` with the absolute path where you cloned this repo:
 
 ```json
     "PreCompact": [
@@ -320,13 +361,13 @@ extracted), `handoff.txt` (the injected text), `terminal-cell.js`, `store-<key>.
 These files hold session content (commands, messages, cell code): treat them like the rollout
 itself. Nothing is written to this repository, to claude-devtools or to Helios.
 
-Settings: `%USERPROFILE%\.codex-handoff\config.json` (`codexHome`, `devtoolsDir`, `heliosRoot`,
-`exportTimeoutMs`, `maxInjectChars`, `references`, `index` with `path`, `maxSessions`,
-`changeLog`, `scopePaths`, `codeapi` with `ports`, `timeoutMs`, `enabled`), or the environment
-variables `CODEX_HOME` (whose `sessions/` tree is searched for a thread's rollout files; default
-`~/.codex`), `CODEX_HANDOFF_STATE`, `CODEX_HANDOFF_DEVTOOLS`, `CODEX_HANDOFF_HELIOS_ROOT` and
-`CODEX_HANDOFF_CODEAPI_PORTS`. A run with `--state <dir>` uses that directory's `config.json`, so
-it never reads, or writes the index configured in, the default state. For example:
+Settings: `%USERPROFILE%\.codex-handoff\config.json` (see [Setup](#setup) for the full table), or
+the environment variables `CODEX_HOME`, `CODEX_HANDOFF_STATE`, `CODEX_HANDOFF_DEVTOOLS`,
+`CODEX_HANDOFF_HELIOS_ROOT` and `CODEX_HANDOFF_CODEAPI_PORTS`. Environment variables override
+config.json, which overrides the defaults. `devtoolsDir` and `heliosRoot` have no defaults and
+must be set via config or environment before the hooks can produce a hand-off. A run with
+`--state <dir>` uses that directory's `config.json`, so it never reads, or writes the index
+configured in, the default state. For example:
 
 ```json
 {

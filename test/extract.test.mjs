@@ -56,10 +56,10 @@ const SELF_CONTAINED = [
 
 test('parseUserMessage lists pasted files, paths with spaces included', () => {
   const text =
-    '\n# Files pasted by the user:\n\n## "Continue the exploration th…": C:\\Users\\me\\.codex/attachments/abc/Pasted text.txt\n\n' +
+    '\n# Files pasted by the user:\n\n## "Continue the exploration th…": C:\\Users\\accountName\\.codex/attachments/abc/Pasted text.txt\n\n' +
     "Pasted text contains the user's request.\n\n## My request:\n\n";
   assert.deepEqual(parseUserMessage(text), {
-    attachments: [{ title: 'Continue the exploration th…', path: 'C:\\Users\\me\\.codex/attachments/abc/Pasted text.txt' }],
+    attachments: [{ title: 'Continue the exploration th…', path: 'C:\\Users\\accountName\\.codex/attachments/abc/Pasted text.txt' }],
     request: '',
   });
   assert.deepEqual(parseUserMessage('go ahead with message 2\n'), { attachments: [], request: 'go ahead with message 2' });
@@ -136,9 +136,9 @@ test('routeLines reads codeApiTerm bridge calls, each by its own arguments', () 
 test('terminal creation is one semantic recipe in two physical transports', () => {
   // as Codex wrote them in session 01a0fcec: the typed route (line 2685) and the /exec bridge (line 1288)
   const rest =
-    'const command="curl.exe -sS -H \'Content-Type: application/json\' --data-binary \'{\\"id\\":\\"codeapi:NewSession\\",\\"cwd\\":\\"C:/Users/me/Desktop/Powershell ToolKit\\",\\"shell\\":\\"powershell.exe\\",\\"show\\":true}\' \'http://127.0.0.1:47338/term/create\'; echo EXIT=$?";';
+    'const command="curl.exe -sS -H \'Content-Type: application/json\' --data-binary \'{\\"id\\":\\"codeapi:NewSession\\",\\"cwd\\":\\"C:/Users/accountName/Desktop/Powershell ToolKit\\",\\"shell\\":\\"powershell.exe\\",\\"show\\":true}\' \'http://127.0.0.1:47338/term/create\'; echo EXIT=$?";';
   const bridge =
-    "const ps = `$body = 'return codeApiTerm.create({id:\"codeapi:NewSession\",cwd:\"C:/Users/me/Desktop/Powershell ToolKit\",shell:\"powershell.exe\",show:true})'\\nInvoke-WebRequest -Uri 'http://127.0.0.1:47339/exec' -Method Post -ContentType 'text/plain' -Body $body`;";
+    "const ps = `$body = 'return codeApiTerm.create({id:\"codeapi:NewSession\",cwd:\"C:/Users/accountName/Desktop/Powershell ToolKit\",shell:\"powershell.exe\",show:true})'\\nInvoke-WebRequest -Uri 'http://127.0.0.1:47339/exec' -Method Post -ContentType 'text/plain' -Body $body`;";
   assert.deepEqual(
     routeLines(rest).map((l) => [l.kind, l.term, l.transport]),
     [['create', 'codeapi:NewSession', 'REST_TERM']]
