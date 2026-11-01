@@ -400,17 +400,38 @@ terminal endpoints last seen working. Only the text between these two markers is
 Writes take a lock in the state directory and replace files atomically, since two Codex windows
 can compact at the same moment. `handoff.mjs index` brings it up to date by hand.
 
-## Requirements
+## Dependencies
 
-- Node.js 20 or later.
-- A claude-devtools checkout with dependencies installed (`pnpm install`): the session record is
-  read by its `scripts/codex-export.ts`, the same reader and normalizer the viewer uses. Codex
-  documents its transcript format as unstable; this keeps that dependency in the project whose
-  tests track it.
-- CODEAPI (optional). Without it, terminal routing is skipped. CODEAPI is a VS Code extension
-  that exposes an HTTP API for terminal control on loopback
-  ([github.com/dimascior/CODEAPI](https://github.com/dimascior/CODEAPI)).
-- Helios (optional). Without it the gate contract section is left out of the hand-off.
+codex-handoff does not run in isolation. It reads session records through claude-devtools, resolves
+terminal endpoints through CODEAPI, and reads the gate contract from Helios. Each dependency is a
+separate repo that must be cloned and configured before the corresponding feature works.
+
+### Required
+
+| Dependency | Repo | What codex-handoff uses it for |
+|-----------|------|-------------------------------|
+| **Node.js 20+** | [nodejs.org](https://nodejs.org/) | Runtime. codex-handoff is pure ESM with zero npm dependencies; Node's standard library is all it imports. |
+| **OpenAI Codex** | [openai.com/codex](https://openai.com/index/introducing-codex/) | The platform. codex-handoff hooks into Codex's `PreCompact` and `SessionStart` lifecycle events via `~/.codex/hooks.json`. Codex provides the session rollout files (`~/.codex/sessions/`) and the `hookSpecificOutput.additionalContext` injection channel. Requires the Codex CLI (`codex-cli`). |
+| **Codex_claude_devtools** | [github.com/dimascior/Codex_claude_devtools](https://github.com/dimascior/Codex_claude_devtools) | Session record reader. codex-handoff shells out to `scripts/codex-export.ts` (run via tsx) to read and normalize Codex's session JSONL into a stable `codex-export.v1` schema. Codex documents its transcript format as unstable; the export script is the same reader and normalizer the devtools viewer uses, so this keeps the raw-format dependency in the project whose tests track it. Clone and run `pnpm install` so tsx and the export script are available. Set `devtoolsDir` in config to point to the checkout root. |
+
+### Optional
+
+| Dependency | Repo | What codex-handoff uses it for | What happens without it |
+|-----------|------|-------------------------------|------------------------|
+| **CODEAPI** | [github.com/dimascior/CODEAPI](https://github.com/dimascior/CODEAPI) | Terminal routing. At injection time, codex-handoff scans ports 47337-47400 for running CODEAPI instances, matches each recorded `codeapiWindowId` against live `/session` responses, and checks terminal liveness via `/term/list`. This tells the model which endpoint to use right now, instead of reusing a stale port from the record. CODEAPI is a VS Code extension that exposes an HTTP API on loopback for terminal control: create visible PTY terminals, write commands, read screen buffers, observe exit. | Terminal routing is skipped. The hand-off still carries the terminal recipes and recorded endpoints, but without the live routing block the model must rediscover which port its window is on. Set `codeapi.enabled` to `false` or `CODEX_HANDOFF_CODEAPI_PORTS` to `off`. |
+| **Helios** | [github.com/dimascior/Helios-](https://github.com/dimascior/Helios-) | Gate contract. codex-handoff reads the Helios gate schema, policy, and integrity manifest from the `.command-gate` directory to build the gate contract section of the hand-off. This tells the model which fields every gate needs at each tier, which values the schema fixes, and what the chain predecessor is (so it can set `previous_correlation_id` correctly). Helios is the PreToolUse gated execution policy layer that sits in front of Bash and PowerShell commands and enforces explicit intent at command time. | The gate contract section is left out of the hand-off. The model must rediscover the gate fields by reading the schema or by trial and error. Set `heliosRoot` to `null`. |
+| **Akashic** | [github.com/dimascior/Akashic](https://github.com/dimascior/Akashic) | Not used directly by codex-handoff. Akashic is the oversight, validation, installer, and trust witness layer around Helios. It prepares, installs, activates, validates, rebaselines, restores, and audits the Helios runtime. If you use Helios, Akashic is how the Helios runtime gets installed and validated against the trusted manifest. | No effect on codex-handoff. Akashic matters for Helios installation, not for the hand-off. |
+
+### Dependency graph
+
+```
+codex-handoff
+  ├── [required] Codex CLI (the platform; provides hooks.json and session rollouts)
+  ├── [required] Codex_claude_devtools (session record export via codex-export.ts)
+  ├── [optional] CODEAPI (live terminal endpoint resolution at injection)
+  └── [optional] Helios (gate contract: schema, policy, chain predecessor)
+                   └── [optional] Akashic (installs and validates the Helios runtime)
+```
 
 ## Setup
 
