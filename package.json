@@ -1,0 +1,17 @@
+{
+  "name": "codex-handoff",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Hands Codex its working state back after context compaction or resume: a PreCompact hook snapshots it from the session record, a SessionStart hook injects it.",
+  "type": "module",
+  "bin": {
+    "codex-handoff": "bin/handoff.mjs"
+  },
+  "scripts": {
+    "test": "node --test",
+    "inventory": "node bin/inventory.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

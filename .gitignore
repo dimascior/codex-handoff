@@ -1,0 +1,6 @@
+node_modules/
+*.log
+# Hand-off state lives in %USERPROFILE%\.codex-handoff, never in this repo.
+state/
+# Evidence files contain real session data with machine-specific paths.
+evidence/
