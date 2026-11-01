@@ -59,6 +59,92 @@ codex-handoff/
 └── .gitignore
 ```
 
+## What codex-handoff is preserving
+
+The hand-off exists because Luna builds working procedures during a session and loses them at
+compaction. These are the patterns it builds and the systems it builds them against.
+
+### CODEAPI terminal pattern
+
+CODEAPI is a VS Code extension that exposes an HTTP API on loopback for driving real PTY
+terminals. Luna uses it to run shell commands in a specific VS Code window. The full cycle:
+
+1. **Discover** every CODEAPI runtime on ports 47337-47400 (`GET /session` on each).
+2. **Select** the target window by its `codeapiWindowId` (a durable UUID the extension persists
+   in `workspaceState`), not by port. Ports drift as windows reopen; a port is a transport handle,
+   not identity. Selection precedence: `codeapiRuntimeId` > `vscodeSessionId` >
+   `codeapiWindowId` > `extensionHostPid` > `workspaceUri` > `serverPort`.
+3. **Create** a visible terminal: `POST /term/create {"shell":"powershell.exe","show":true}` on
+   the selected window's port. Returns `{id, shell, cwd, pid}`. The terminal appears in the VS
+   Code window as `codeapi:<id>`.
+4. **Write** a command: `POST /term/<id>/write {"data":"git status","enter":true}`. Returns
+   `{wrote: N}` — bytes accepted, not success.
+5. **Read** the output: `GET /term/<id>/read`. Returns the raw ANSI/VT screen buffer. Parse after
+   the command echo; strip ANSI codes.
+6. **Observe exit**: poll `GET /term/list` until `alive:false` and an integer `exitCode`. Liveness
+   comes from node-pty's `onExit`, never from `DELETE`.
+7. **Reap**: `DELETE /term/<id>`. Buffers may hold secrets.
+
+Luna builds these calls in two physical transports: the REST `/term/*` routes (`REST_TERM_CREATE`,
+`REST_TERM_WRITE`, `REST_TERM_READ`) or the JS bridge posted to `/exec`
+(`codeApiTerm.create({...})`, `codeApiTerm.write("<id>", ...)`, `codeApiTerm.read("<id>")`). Both
+transports hit the same backend. The hand-off captures the newest working call of each kind as a
+semantic recipe (`codeapi.terminal.create`, `codeapi.terminal.write_and_enter`,
+`codeapi.terminal.read`), bound to the CODEAPI window where it worked. The whole code cell that
+last wrote to the terminal is saved as `terminal-cell.js` — it typically contains the
+gate-writing, SHA hashing and chain-predecessor helpers Luna built during the session.
+
+At injection, codex-handoff resolves the current endpoint of each recorded window by scanning the
+port band live. It never falls back to the recorded port.
+
+### Helios gate pattern
+
+Helios is a command gate system. Every shell command Luna executes goes through a gate file: a
+JSON document in `.command-gate/pending/` that declares the command, its SHA-256, its risk tier,
+its segments, what it reads and writes, and why it is needed. The interaction cycle:
+
+1. Luna writes a gate file with a **placeholder SHA-256** (it cannot compute the hash before
+   writing the file).
+2. Helios's PreToolUse hook rejects the command and returns the **correct SHA-256** in the
+   rejection message.
+3. Luna edits the gate file to insert the correct SHA-256.
+4. Luna retries the command. Helios validates the gate and allows execution.
+
+This round-trip happens for every shell command. Read, Grep and Glob operations bypass the gate
+system entirely — they use dedicated tools that do not trigger the PreToolUse hook.
+
+The gate contract the hand-off carries is read live from Helios at snapshot time:
+- **Base fields** (`schema.sections.fields.required_base_fields`): the fields every gate needs,
+  regardless of tier (`schema_version`, `correlation_id`, `created_utc`, `expires_utc`, `command`,
+  `command_sha256`, `working_directory`, `shell`, `risk_tier`, `multi_command`, `segments`,
+  `exit_capture`, `exit_capture_reason`, `need`, `expected`, `actual_means`, `next_logic`,
+  `approval_boundary`, `read_write_impact`, `previous_correlation_id`).
+- **Tier fields** (`policy.tier_required_fields`): fields a specific tier adds (e.g. tier 3
+  requires `stop_conditions`).
+- **Effective fields** per tier: the union of base and tier fields (`DERIVED`).
+- **Fixed values**: values the schema mandates (e.g. `schema_version` must be exactly
+  `"command-gate.v1"`), with VERIFIED status when a gate Helios accepted carries the same value.
+- **Chain predecessor**: the session's last executed correlation id from the Helios session
+  ledger, so Luna can set `previous_correlation_id` correctly.
+
+codex-handoff keeps no list of gate fields itself. A field added to the schema appears in the next
+hand-off. When the schema or policy cannot be read, the hand-off says so instead of filling in
+stale values.
+
+### Code-mode store pattern
+
+Codex's code-mode sandbox has a `store(key, value)` / `load(key)` API. Luna uses it to persist
+values across code cells within a session (SHA-256 helper functions, terminal recipes, computed
+hashes). The store does not survive a new process: after a `codex exec resume`, `load()` returns
+`undefined` for every key. The hand-off captures each store key with its storing cell so Luna can
+re-run the cell to restore the value.
+
+### Sandbox limits pattern
+
+Luna's code-mode sandbox lacks certain globals. When it hits a `ReferenceError` (e.g. `crypto is
+not defined`) or a `typeof` probe returns `"undefined"`, that is a discovered sandbox limit. The
+hand-off carries these so Luna does not rediscover them by trial and error after compaction.
+
 ## The two hooks
 
 | Hook | Command | What it does |
