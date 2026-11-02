@@ -66,6 +66,15 @@ compaction. These are the patterns it builds and the systems it builds them agai
 
 ### CODEAPI terminal pattern
 
+When CODEAPI is configured with optional `CODEAPI_PUBLIC_TOKEN` authentication,
+the Codex hook process must receive that same environment variable. The
+handoff's live discovery sends `X-CODEAPI-TOKEN` on requests when it is set,
+so `GET /term/list` remains available for terminal reconciliation. Without
+it, public `GET /session` discovery still succeeds, but protected terminal
+state cannot be inspected and is reported as unavailable. The token is never
+written into handoff records or lifecycle output.
+
+
 CODEAPI is a VS Code extension that exposes an HTTP API on loopback for driving real PTY
 terminals. Luna uses it to run shell commands in a specific VS Code window. The full cycle:
 
