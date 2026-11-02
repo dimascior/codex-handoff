@@ -1,0 +1,23 @@
+name: codex-handoff verification
+
+on:
+  push:
+    branches: [main, fix/codeapi-public-token-20261102]
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify CODEAPI routing integration
+        run: node --test test/codeapi.test.mjs
+      - name: Run complete test suite
+        run: npm test
